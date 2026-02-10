@@ -11,193 +11,173 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "plotly"])
     import plotly.express as px
 
-# ------------------------ 파일 설정 ------------------------
-DB_FILE = "my_total_library.csv"
-if not os.path.exists(DB_FILE):
-    df = pd.DataFrame(columns=["등록일", "책이름", "저자", "출판사", "장르", "메모"])
-    df.to_csv(DB_FILE, index=False)
+# ------------------------ [보안] 비밀번호 확인 함수 ------------------------
+def check_password():
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = False
 
-def load_data():
-    return pd.read_csv(DB_FILE)
-
-library_df = load_data()
-total_books = len(library_df)
-
-# ------------------------ 화면 설정 ------------------------
-st.set_page_config(page_title="Tottenham Hotspur Library", page_icon="⚽", layout="wide")
-
-# ------------------------ 디자인 CSS (사이드바 강조 버전) ------------------------
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
-.main { background-color: #f8f9fa; font-family: 'Noto Sans KR', sans-serif; }
-
-/* 사이드바 전체 배경 및 글자색 */
-[data-testid="stSidebar"] {
-    background-color: #132257 !important;
-}
-
-/* 사이드바 내의 모든 텍스트를 흰색으로 */
-[data-testid="stSidebar"] .stMarkdown p, [data-testid="stSidebar"] label {
-    color: white !important;
-    font-weight: 700 !important;
-    font-size: 1.1rem !important;
-}
-
-/* 셀렉트박스(메뉴) 가독성 업그레이드 */
-div[data-baseweb="select"] > div {
-    background-color: white !important;
-    color: #132257 !important;
-    border-radius: 10px !important;
-}
-
-/* 독서 타워 카드 */
-.tower-card {
-    background: linear-gradient(135deg, #132257 0%, #001c58 100%);
-    color: white; padding: 40px; border-radius: 25px;
-    text-align: center; box-shadow: 0 15px 30px rgba(19, 34, 87, 0.4); margin-bottom: 30px;
-}
-.tower-card h1 { color: #ffffff; font-size: 110px; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-
-/* 도서 카드 */
-.book-card {
-    background: white; padding: 20px; border-radius: 15px; border-left: 10px solid #132257;
-    margin-bottom: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ------------------------ 사이드바 (내용 꽉 채우기) ------------------------
-spurs_logo = "https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg"
-st.sidebar.image(spurs_logo, width=150)
-st.sidebar.markdown("<h1 style='text-align:center; color:white; font-size:25px;'>SPURS BOARD</h1>", unsafe_allow_html=True)
-
-st.sidebar.divider() # 구분선 추가
-
-# 메뉴 선택 (글자색 해결됨)
-menu = st.sidebar.selectbox("📋 전술 메뉴 선택", ["홈/통계", "새 책 등록하기", "내 서재 목록", "서재 관리"])
-
-st.sidebar.markdown("<br><br>", unsafe_allow_html=True)
-
-# 사이드바 하단 빈 공간 채우기
-st.sidebar.markdown("""
-<div style='background-color:rgba(255,255,255,0.1); padding:15px; border-radius:10px; border:1px dashed rgba(255,255,255,0.3);'>
-    <p style='margin:0; font-size:14px; color:#ddd;'>TEAM SLOGAN</p>
-    <p style='margin:0; font-size:18px; color:white; font-weight:900;'>TO DARE IS TO DO</p>
-    <p style='margin-top:10px; font-size:12px; color:#bbb;'>오늘도 한 권의 책으로<br>승리를 향해 나아갑시다!</p>
-</div>
-""", unsafe_allow_html=True)
-
-st.sidebar.markdown("<p style='text-align:center; font-size:12px; color:rgba(255,255,255,0.4); margin-top:50px;'>© 2026 SPURS ACADEMY</p>", unsafe_allow_html=True)
-
-
-# ------------------------ 홈/통계 ------------------------
-if menu == "홈/통계":
-    col_t1, col_t2 = st.columns([2, 1])
-    with col_t1:
-        st.title("⚽ COYS! 나의 독서 기록")
-        st.subheader("나의 독서 타워")
-        book_icons = "📚" * (total_books // 10 + 1)
-        st.markdown(f"""
-            <div class="tower-card">
-                <p style="letter-spacing: 5px; font-weight:900;">GOALS SCORED</p>
-                <h1>{total_books}</h1>
-                <p style="font-size: 50px; margin:20px 0;">{book_icons}</p>
-                <p style="font-size:18px; opacity:0.8;">다음 레벨까지 <b>{10 - (total_books % 10)}권</b>의 슈팅이 필요합니다.</p>
-            </div>
-        """, unsafe_allow_html=True)
-    with col_t2:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.image(spurs_logo, use_container_width=True)
-
-    st.divider()
-    st.subheader("📊 포지션별(장르별) 득점 통계")
-    if total_books > 0:
-        genre_counts = library_df['장르'].value_counts().reset_index()
-        genre_counts.columns = ['장르', '권수']
+    if not st.session_state["password_correct"]:
+        st.set_page_config(page_title="SPURS BOARD Login", page_icon="⚽")
+        st.title("⚽ COYS! SPURS BOARD")
+        st.subheader("스쿼드 명단에 접근하려면 전술 코드를 입력하세요.")
         
-        # 🔥 여기서 색깔을 확 바꿨어! 네이비, 골드, 레드, 민트 등등 섞어서!
-        fig = px.pie(genre_counts, values='권수', names='장르', hole=0.5,
-                     color_discrete_sequence=[
-                         '#132257', # 토트넘 네이비
-                         '#DAA520', # 골드 (포인트!)
-                         '#E21A23', # 레드 (강력함!)
-                         '#20B2AA', # 라이트 씨 그린
-                         '#FF8C00', # 다크 오렌지
-                         '#4169E1'  # 로얄 블루
-                     ])
-        
-        # 그래프 안에 글씨가 더 잘 보이게 세팅 (퍼센트랑 이름 같이 나옴)
-        fig.update_traces(textposition='inside', textinfo='percent+label', textfont_size=14)
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("책을 등록하면 전술 분석 그래프가 나타납니다!")
-# ------------------------ 새 책 등록 ------------------------
-elif menu == "새 책 등록하기":
-    st.title("📝 신규 도서 영입")
-    with st.form(key='book_form', clear_on_submit=True):
-        c1, c2 = st.columns(2)
-        with c1:
-            new_title = st.text_input("📋 책 제목")
-            new_author = st.text_input("✍️ 저자")
-        with c2:
-            new_pub = st.text_input("🏢 출판사")
-            new_genre = st.selectbox("🎯 장르", ["소설", "만화", "자기계발", "과학/기술", "인문/사회", "기타"])
-        new_memo = st.text_area("🗒️ 스카우팅 리포트 (메모)")
-        submit_button = st.form_submit_button(label='서재에 스쿼드 등록')
-        if submit_button:
-            if new_title and new_author:
-                new_row = {"등록일": pd.Timestamp.now().strftime("%Y-%m-%d"), "책이름": new_title, "저자": new_author, "출판사": new_pub, "장르": new_genre, "메모": new_memo}
-                library_df = pd.concat([library_df, pd.DataFrame([new_row])], ignore_index=True)
-                library_df.to_csv(DB_FILE, index=False)
-                st.balloons()
-                st.success(f"⚽ {new_title} 영입 완료!")
+        # 비밀번호 입력창 (네 생일 1006으로 설정됨)
+        user_pwd = st.text_input("TACTICAL CODE (Password)", type="password")
+        if st.button("Access Granted"):
+            if user_pwd == "1006": 
+                st.session_state["password_correct"] = True
+                st.rerun()
             else:
-                st.error("🚨 제목과 저자는 필수 입력 사항입니다.")
+                st.error("🚨 전술 코드가 일치하지 않습니다. (Access Denied)")
+        
+        st.info("Tip: 구단주만 알 수 있는 4자리 코드를 입력하세요.")
+        return False
+    return True
 
-# ------------------------ 내 서재 목록 (장르별 컬러 적용) ------------------------
-elif menu == "내 서재 목록":
-    st.title("📋 전체 스쿼드 명단")
-    
-    # 그래프랑 똑같은 컬러 매핑 사전 (딕셔너리)
-    genre_colors = {
-        "소설": "#132257",      # 토트넘 네이비
-        "자기계발": "#DAA520",  # 골드
-        "만화": "#E21A23",      # 레드
-        "과학/기술": "#20B2AA", # 라이트 씨 그린
-        "인문/사회": "#FF8C00", # 다크 오렌지
-        "기타": "#4169E1"       # 로얄 블루
+# ------------------------ 메인 앱 실행 로직 ------------------------
+if check_password():
+    # ------------------------ 파일 설정 ------------------------
+    DB_FILE = "my_total_library.csv"
+    if not os.path.exists(DB_FILE):
+        df = pd.DataFrame(columns=["등록일", "책이름", "저자", "출판사", "장르", "메모"])
+        df.to_csv(DB_FILE, index=False)
+
+    def load_data():
+        return pd.read_csv(DB_FILE)
+
+    library_df = load_data()
+    total_books = len(library_df)
+
+    # ------------------------ 화면 설정 ------------------------
+    st.set_page_config(page_title="Tottenham Hotspur Library", page_icon="⚽", layout="wide")
+
+    # ------------------------ 디자인 CSS ------------------------
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+    .main { background-color: #f8f9fa; font-family: 'Noto Sans KR', sans-serif; }
+    [data-testid="stSidebar"] { background-color: #132257 !important; }
+    [data-testid="stSidebar"] .stMarkdown p, [data-testid="stSidebar"] label {
+        color: white !important; font-weight: 700 !important; font-size: 1.1rem !important;
     }
+    div[data-baseweb="select"] > div {
+        background-color: white !important; color: #132257 !important; border-radius: 10px !important;
+    }
+    .tower-card {
+        background: linear-gradient(135deg, #132257 0%, #001c58 100%);
+        color: white; padding: 40px; border-radius: 25px;
+        text-align: center; box-shadow: 0 15px 30px rgba(19, 34, 87, 0.4); margin-bottom: 30px;
+    }
+    .tower-card h1 { color: #ffffff; font-size: 110px; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    .book-card {
+        background: white; padding: 20px; border-radius: 15px; border-left: 10px solid #132257;
+        margin-bottom: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-    if total_books > 0:
-        cols = st.columns(3)
-        for i, (idx, row) in enumerate(library_df.iloc[::-1].iterrows()):
-            # 장르에 맞는 색상 가져오기 (없으면 기본 네이비)
-            card_color = genre_colors.get(row['장르'], "#132257")
-            
-            with cols[i % 3]:
-                st.markdown(f"""
-                    <div class="book-card" style="border-left: 10px solid {card_color};">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <h3 style='margin:0; color:#132257;'>{row['책이름']}</h3>
-                            <span style="background-color:{card_color}; color:white; padding:2px 8px; border-radius:5px; font-size:10px; font-weight:bold;">
-                                {row['장르']}
-                            </span>
+    # ------------------------ 사이드바 ------------------------
+    spurs_logo = "https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg"
+    st.sidebar.image(spurs_logo, width=150)
+    st.sidebar.markdown("<h1 style='text-align:center; color:white; font-size:25px;'>SPURS BOARD</h1>", unsafe_allow_html=True)
+    st.sidebar.divider()
+
+    menu = st.sidebar.selectbox("📋 전술 메뉴 선택", ["홈/통계", "새 책 등록하기", "내 서재 목록", "서재 관리"])
+    st.sidebar.markdown("<br><br>", unsafe_allow_html=True)
+    st.sidebar.markdown("""
+    <div style='background-color:rgba(255,255,255,0.1); padding:15px; border-radius:10px; border:1px dashed rgba(255,255,255,0.3);'>
+        <p style='margin:0; font-size:14px; color:#ddd;'>TEAM SLOGAN</p>
+        <p style='margin:0; font-size:18px; color:white; font-weight:900;'>TO DARE IS TO DO</p>
+        <p style='margin-top:10px; font-size:12px; color:#bbb;'>오늘도 한 권의 책으로<br>승리를 향해 나아갑시다!</p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.sidebar.markdown("<p style='text-align:center; font-size:12px; color:rgba(255,255,255,0.4); margin-top:50px;'>© 2026 SPURS ACADEMY</p>", unsafe_allow_html=True)
+
+    # ------------------------ 홈/통계 ------------------------
+    if menu == "홈/통계":
+        col_t1, col_t2 = st.columns([2, 1])
+        with col_t1:
+            st.title("⚽ COYS! 나의 독서 기록")
+            st.subheader("나의 독서 타워")
+            book_icons = "📚" * (total_books // 10 + 1)
+            st.markdown(f"""
+                <div class="tower-card">
+                    <p style="letter-spacing: 5px; font-weight:900;">GOALS SCORED</p>
+                    <h1>{total_books}</h1>
+                    <p style="font-size: 50px; margin:20px 0;">{book_icons}</p>
+                    <p style="font-size:18px; opacity:0.8;">다음 레벨까지 <b>{10 - (total_books % 10)}권</b>의 슈팅이 필요합니다.</p>
+                </div>
+            """, unsafe_allow_html=True)
+        with col_t2:
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            st.image(spurs_logo, use_container_width=True)
+
+        st.divider()
+        st.subheader("📊 포지션별(장르별) 득점 통계")
+        if total_books > 0:
+            genre_counts = library_df['장르'].value_counts().reset_index()
+            genre_counts.columns = ['장르', '권수']
+            fig = px.pie(genre_counts, values='권수', names='장르', hole=0.5,
+                         color_discrete_sequence=['#132257', '#DAA520', '#E21A23', '#20B2AA', '#FF8C00', '#4169E1'])
+            fig.update_traces(textposition='inside', textinfo='percent+label', textfont_size=14)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("책을 등록하면 전술 분석 그래프가 나타납니다!")
+
+    # ------------------------ 새 책 등록 ------------------------
+    elif menu == "새 책 등록하기":
+        st.title("📝 신규 도서 영입")
+        with st.form(key='book_form', clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                new_title = st.text_input("📋 책 제목")
+                new_author = st.text_input("✍️ 저자")
+            with c2:
+                new_pub = st.text_input("🏢 출판사")
+                new_genre = st.selectbox("🎯 장르", ["소설", "만화", "자기계발", "과학/기술", "인문/사회", "기타"])
+            new_memo = st.text_area("🗒️ 스카우팅 리포트 (메모)")
+            submit_button = st.form_submit_button(label='서재에 스쿼드 등록')
+            if submit_button:
+                if new_title and new_author:
+                    new_row = {"등록일": pd.Timestamp.now().strftime("%Y-%m-%d"), "책이름": new_title, "저자": new_author, "출판사": new_pub, "장르": new_genre, "메모": new_memo}
+                    library_df = pd.concat([library_df, pd.DataFrame([new_row])], ignore_index=True)
+                    library_df.to_csv(DB_FILE, index=False)
+                    st.balloons()
+                    st.success(f"⚽ {new_title} 영입 완료!")
+                    st.rerun()
+                else:
+                    st.error("🚨 제목과 저자는 필수 입력 사항입니다.")
+
+    # ------------------------ 내 서재 목록 ------------------------
+    elif menu == "내 서재 목록":
+        st.title("📋 전체 스쿼드 명단")
+        genre_colors = {"소설": "#132257", "자기계발": "#DAA520", "만화": "#E21A23", "과학/기술": "#20B2AA", "인문/사회": "#FF8C00", "기타": "#4169E1"}
+        if total_books > 0:
+            cols = st.columns(3)
+            for i, (idx, row) in enumerate(library_df.iloc[::-1].iterrows()):
+                card_color = genre_colors.get(row['장르'], "#132257")
+                with cols[i % 3]:
+                    st.markdown(f"""
+                        <div class="book-card" style="border-left: 10px solid {card_color};">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <h3 style='margin:0; color:#132257;'>{row['책이름']}</h3>
+                                <span style="background-color:{card_color}; color:white; padding:2px 8px; border-radius:5px; font-size:10px; font-weight:bold;">{row['장르']}</span>
+                            </div>
+                            <p style="margin-top:10px;"><b>에이전트(저자):</b> {row['저자']}</p>
+                            <p style='background:#f0f2f6; padding:10px; border-radius:5px; font-style:italic; min-height:60px;'>"{row['메모']}"</p>
+                            <p style="text-align:right; font-size:11px; color:#aaa; margin-top:10px;">SIGNED: {row['등록일']}</p>
                         </div>
-                        <p style="margin-top:10px;"><b>에이전트(저자):</b> {row['저자']}</p>
-                        <p style='background:#f0f2f6; padding:10px; border-radius:5px; font-style:italic; min-height:60px;'>"{row['메모']}"</p>
-                        <p style="text-align:right; font-size:11px; color:#aaa; margin-top:10px;">SIGNED: {row['등록일']}</p>
-                    </div>
-                """, unsafe_allow_html=True)
-    else:
-        st.info("등록된 책이 없습니다. 먼저 신규 선수를 영입(등록)해주세요!")
-# ------------------------ 서재 관리 ------------------------
-elif menu == "서재 관리":
-    st.title("⚙️ 스쿼드 방출 관리")
-    if total_books > 0:
-        target = st.selectbox("방출할 책 선택", library_df['책이름'].tolist())
-        if st.button("🚨 이 책 방출하기"):
-            library_df = library_df[library_df['책이름'] != target]
-            library_df.to_csv(DB_FILE, index=False)
-            st.success(f"✅ {target} 방출 완료.")
-            st.rerun()
+                    """, unsafe_allow_html=True)
+        else:
+            st.info("등록된 책이 없습니다. 먼저 신규 선수를 영입(등록)해주세요!")
+
+    # ------------------------ 서재 관리 ------------------------
+    elif menu == "서재 관리":
+        st.title("⚙️ 스쿼드 방출 관리")
+        if total_books > 0:
+            target = st.selectbox("방출할 책 선택", library_df['책이름'].tolist())
+            if st.button("🚨 이 책 방출하기"):
+                library_df = library_df[library_df['책이름'] != target]
+                library_df.to_csv(DB_FILE, index=False)
+                st.success(f"✅ {target} 방출 완료.")
+                st.rerun()
