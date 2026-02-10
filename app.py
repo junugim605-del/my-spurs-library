@@ -178,4 +178,3 @@ if check_password():
                 library_df = library_df[library_df['책이름'] != target]
                 library_df.to_csv(DB_FILE, index=False)
                 st.warning(f"✅ {target} 방출 완료.")
-                st.rerun()
