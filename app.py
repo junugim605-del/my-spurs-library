@@ -10,7 +10,12 @@ st.set_page_config(
     layout="wide"
 )
 
-DB_FILE = "my_total_library.csv"
+from supabase import create_client, Client
+
+# Supabase 연결 설정 (비밀 금고 secrets.toml에서 정보를 가져옴)
+url: str = st.secrets["SUPABASE_URL"]
+key: str = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(url, key)
 
 # ===================== 장르 & 색상 =====================
 GENRES = [
@@ -24,7 +29,149 @@ GENRE_COLORS = {
     "수학": "#009688", "경제": "#795548", "역사": "#607D8B",
     "철학": "#673AB7", "에세이": "#E91E63", "기타": "#9E9E9E"
 }
-
+# 팀별 커스텀 세팅 (자료 모으는 대로 여기만 업데이트하면 끝!)
+TEAM_CONFIG = {
+    "Tottenham": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg",
+        "main_color": "#132257",
+        "accent_color": "#ffffff",
+        "slogan": "TO DARE IS TO DO",
+        "sub_slogan": "NORTH LONDON IS WHITE"
+    },
+    "Liverpool": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg",
+        "main_color": "#C8102E",
+        "accent_color": "#f6eb61",
+        "slogan": "YOU'LL NEVER WALK ALONE",
+        "sub_slogan": "THIS IS ANFIELD"
+    },
+    "Arsenal": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg",
+        "main_color": "#EF0107",
+        "accent_color": "#ffffff",
+        "slogan": "VICTORIA CONCORDIA CRESCIT",
+        "sub_slogan": "NORTH LONDON IS RED"
+    },
+    "Man City": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg",
+        "main_color": "#6CABDD",
+        "accent_color": "#ffffff",
+        "slogan": "CITY TILL I DIE",
+        "sub_slogan": "BLUE MOON RISING"
+    },
+    "Man United": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg",
+        "main_color": "#DA291C",
+        "accent_color": "#FBE122",
+        "slogan": "GLORY GLORY MAN UNITED",
+        "sub_slogan": "THE RED DEVILS"
+    },
+    "Chelsea": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg",
+        "main_color": "#034694",
+        "accent_color": "#ffffff",
+        "slogan": "KEEP THE BLUE FLAG FLYING HIGH",
+        "sub_slogan": "PRIDE OF LONDON"
+    },
+    "Aston Villa": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/f/f9/Aston_Villa_FC_crest_%282024%29.svg",
+        "main_color": "#670E36",
+        "accent_color": "#95BFE5",
+        "slogan": "PREPARED",
+        "sub_slogan": "VILLANS"
+    },
+    "Newcastle": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/5/56/Newcastle_United_Logo.svg",
+        "main_color": "#241F20",
+        "accent_color": "#ffffff",
+        "slogan": "HOWAY THE LADS",
+        "sub_slogan": "THE MAGPIES"
+    },
+    "Brighton": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/f/fd/Brighton_%26_Hove_Albion_logo.svg",
+        "main_color": "#0057B8",
+        "accent_color": "#ffffff",
+        "slogan": "SEAGULLS",
+        "sub_slogan": "SUSSEX BY THE SEA"
+    },
+    "West Ham": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg",
+        "main_color": "#7A263A",
+        "accent_color": "#1BB1E7",
+        "slogan": "I'M FOREVER BLOWING BUBBLES",
+        "sub_slogan": "THE HAMMERS"
+    },
+    "Wolves": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/f/fc/Wolverhampton_Wanderers.svg",
+        "main_color": "#FDB913",
+        "accent_color": "#231F20",
+        "slogan": "OUT OF DARKNESS COMETH LIGHT",
+        "sub_slogan": "WOLVES"
+    },
+    "Fulham": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/3/3f/Fulham_FC_%28shield%29.svg",
+        "main_color": "#ffffff",
+        "accent_color": "#000000",
+        "slogan": "FFC",
+        "sub_slogan": "THE COTTAGERS"
+    },
+    "Bournemouth": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/e/e5/AFC_Bournemouth_%282013%29.svg",
+        "main_color": "#DA291C",
+        "accent_color": "#000000",
+        "slogan": "TOGETHER, ANYTHING IS POSSIBLE",
+        "sub_slogan": "THE CHERRIES"
+    },
+    "Crystal Palace": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/a/a2/Crystal_Palace_FC_logo_%282022%29.svg",
+        "main_color": "#1B458F",
+        "accent_color": "#C4122E",
+        "slogan": "SOUTH LONDON & PROUD",
+        "sub_slogan": "THE EAGLES"
+    },
+    "Brentford": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/2/2a/Brentford_FC_crest.svg",
+        "main_color": "#E30613",
+        "accent_color": "#ffffff",
+        "slogan": "BEE TOGETHER",
+        "sub_slogan": "THE BEES"
+    },
+    "Everton": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/7/7c/Everton_FC_logo.svg",
+        "main_color": "#003399",
+        "accent_color": "#ffffff",
+        "slogan": "NIL SATIS NISI OPTIMUM",
+        "sub_slogan": "THE TOFFEES"
+    },
+    "Leicester": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/2/2d/Leicester_City_crest.svg",
+        "main_color": "#003090",
+        "accent_color": "#FDBE11",
+        "slogan": "FOXES NEVER QUIT",
+        "sub_slogan": "FEARLESS"
+    },
+    "Ipswich": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/4/43/Ipswich_Town.svg",
+        "main_color": "#0033FF",
+        "accent_color": "#ffffff",
+        "slogan": "THE TRACTOR BOYS",
+        "sub_slogan": "ITFC"
+    },
+    "Southampton": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/c/c9/Southampton_FC.svg",
+        "main_color": "#D71920",
+        "accent_color": "#ffffff",
+        "slogan": "MARCHING IN",
+        "sub_slogan": "THE SAINTS"
+    },
+    "Nott'm Forest": {
+        "logo": "https://upload.wikimedia.org/wikipedia/en/e/e5/Nottingham_Forest_F.C._logo.svg",
+        "main_color": "#DD0000",
+        "accent_color": "#ffffff",
+        "slogan": "YOU REDS",
+        "sub_slogan": "FOREST"
+    }
+}
 SEASONS = ["2025", "2026", "2027"]
 
 def season_top_genre(df, season):
@@ -42,127 +189,142 @@ def season_mvp_book(df, season):
     mvp = sdf[sdf["장르"] == top_genre].iloc[0]
 
     return mvp
-# ===================== 비밀번호 =====================
+# ===================== 비밀번호 (DB 로그인 전술) =====================
 def check_password():
-    if "auth" not in st.session_state:
-        st.session_state.auth = False
+    if st.session_state.get("auth"):
+        return True
 
-    if not st.session_state.auth:
-        st.title("⚽ COYS! SPURS BOARD")
-        pwd = st.text_input("TACTICAL CODE", type="password")
-        if st.button("ACCESS"):
-            if pwd == "1006":
+    st.title("⚽ CLUB MEMBERSHIP")
+
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        # ⭐ 여기를 토트넘 로고 대신 EPL 공식 로고로 변경!
+        epl_logo = "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg"
+        st.image(epl_logo, width=150) # 폭도 살짝 키웠습니다!
+    
+    with col2:
+        # ... 이하 아이디/비번 입력창 그대로 ...
+        input_id = st.text_input("USER ID (아이디)")
+        input_pw = st.text_input("PASSWORD (비밀번호)", type="password")
+        login_btn = st.button("LOGIN")
+
+    if login_btn:
+        try:
+            # Supabase에서 유저 정보 확인
+            response = supabase.table("users").select("*")\
+                .eq("username", input_id)\
+                .eq("password", input_pw)\
+                .execute()
+
+# (기존 코드 74라인 부근 수정)
+            if response.data:
                 st.session_state.auth = True
+                st.session_state.user_id = response.data[0]['username']
+                # ⭐ 이 줄을 꼭 추가해야 팀 정보가 저장됩니다!
+                st.session_state.user_team = response.data[0].get('team_name', 'Tottenham') 
+                st.success(f"✅ {st.session_state.user_id} 구단주님, 환영합니다!")
                 st.rerun()
             else:
-                st.error("전술 코드가 틀렸습니다")
-        return False
+                st.error("🚫 아이디 또는 비밀번호가 틀렸습니다!")
+        except Exception as e:
+            st.error(f"⚠️ 로그인 서버 확인 필요: {e}")
+            
+    return False
     return True
-st.markdown("""
-<style>
-/* ===== 메인 배경 ===== */
-.main {
-    background: linear-gradient(180deg, #f8f9fa 0%, #eef1f7 100%);
-}
-
-/* ===== 사이드바 ===== */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #10224d, #1b2f6b);
-}
-
-/* ===== 섹션 타이틀 ===== */
-.section-title {
-    padding:12px 24px;
-    background:#132257;
-    color:white;
-    border-radius:30px;
-    font-weight:900;
-    font-size:28px;
-    display:inline-block;
-    margin-bottom:20px;
-}
-
-/* ===== 타워 카드 ===== */
-.tower-card {
-    background: linear-gradient(135deg, #132257, #001c58);
-    color:white;
-    padding:50px;
-    border-radius:30px;
-    text-align:center;
-}
-
-/* ===== 책 카드 ===== */
-.book-card {
-    background:white;
-    padding:18px;
-    border-radius:15px;
-    margin-bottom:15px;
-    border-left:8px solid;
-}
-
-/* ===== 사이드바 슬로건 ===== */
-.sidebar-slogan {
-    text-align:center;
-    margin-top:25px;
-}
-.sidebar-slogan .main {
-    font-size:20px;
-    font-weight:900;
-    color:#9db7ff;
-}
-.sidebar-slogan .sub {
-    font-size:14px;
-    letter-spacing:2px;
-    color:#dfe6ff;
-}
-
-/* ===== 모바일 최적화 ===== */
-@media (max-width: 768px) {
-    .section-title {
-        font-size:20px;
-        padding:8px 16px;
-    }
-    .tower-card {
-        padding:25px;
-        border-radius:20px;
-    }
-    .book-card {
-        padding:14px;
-        font-size:14px;
-    }
-    [data-testid="column"] {
-        width:100% !important;
-        flex:1 1 100% !important;
-    }
-}
-</style>
-""", unsafe_allow_html=True)
-
 # ===================== 메인 =====================
 if check_password():
+    # 1. 팀 정보 가져오기 (이건 그대로 유지!)
+    user_team = st.session_state.get("user_team", "Tottenham")
+    config = TEAM_CONFIG.get(user_team, TEAM_CONFIG["Tottenham"])
+    current_logo = config["logo"]
 
-    # ---------- DB 로드 & 보정 ----------
-    if not os.path.exists(DB_FILE):
-        pd.DataFrame(columns=[
-            "등록일","책이름","저자","출판사","장르","시즌","메모"
-        ]).to_csv(DB_FILE, index=False)
+    # 2. 여기서부터 디자인 코드를 통째로 교체! (업그레이드 버전)
+    st.markdown(f"""
+    <style>
+    /* 메인 배경 (팀 컬러 살짝 반영) */
+    .stApp {{
+        background: linear-gradient(180deg, #f8f9fa 0%, {config['main_color']}10 100%);
+    }}
 
-# CSV 읽을 때 시즌 컬럼을 문자열로 강제
-    library_df = pd.read_csv(DB_FILE, dtype={"시즌": str})
+    /* 사이드바 (팀 컬러 그라데이션) */
+    [data-testid="stSidebar"] {{
+        background: linear-gradient(180deg, {config['main_color']}, #000000) !important;
+    }}
 
-    if "시즌" not in library_df.columns:
-        library_df["시즌"] = SEASONS[0]
-        library_df.to_csv(DB_FILE, index=False)
+    /* 섹션 타이틀 (팀 컬러 반영) */
+    .section-title {{
+        padding:12px 24px;
+        background: {config['main_color']} !important;
+        color: {config['accent_color']} !important;
+        border-radius:30px;
+        font-weight:900;
+        font-size:28px;
+        display:inline-block;
+        margin-bottom:20px;
+    }}
 
+    /* 버튼 색상 강제 변경 */
+    div.stButton > button:first-child {{
+        background-color: {config['main_color']} !important;
+        color: {config['accent_color']} !important;
+        border-radius: 20px;
+        border: none;
+    }}
 
+    /* 타워 카드 (전광판) */
+    .tower-card {{
+        background: linear-gradient(135deg, {config['main_color']}, #000000);
+        color: {config['accent_color']};
+        padding:50px;
+        border-radius:30px;
+        text-align:center;
+    }}
+
+    /* 모바일 최적화 (반응형) */
+    @media (max-width: 768px) {{
+        .section-title {{ font-size:20px; padding:8px 16px; }}
+        .tower-card {{ padding:25px; border-radius:20px; }}
+        [data-testid="column"] {{ width:100% !important; flex:1 1 100% !important; }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    # 3. 이후 DB 로드 로직 시작...
+    try:
+        response = supabase.table("books").select("*").execute()
+        # ... (이하 기존 코드 그대로)
+        
+        if response.data:
+            # 가져온 데이터를 판다스 데이터프레임으로 변환
+            library_df = pd.DataFrame(response.data)
+            
+            # DB의 영어 컬럼명을 앱에서 사용하는 한글 이름으로 변환 (매핑 작업)
+            library_df = library_df.rename(columns={
+                "title": "책이름", 
+                "author": "저자", 
+                "publisher": "출판사",
+                "genre": "장르", 
+                "season": "시즌", 
+                "memo": "메모", 
+                "registered_at": "등록일"
+            })
+        else:
+            # DB가 텅 비어있을 때 (첫 실행 시)
+            library_df = pd.DataFrame(columns=["등록일","책이름","저자","출판사","장르","시즌","메모"])
+            
+    except Exception as e:
+        st.error(f"DB 연결 중 부상 발생(에러): {e}")
+        library_df = pd.DataFrame(columns=["등록일","책이름","저자","출판사","장르","시즌","메모"])
+
+    # 시즌 컬럼 문자열 강제 (기존 로직 유지)
+    library_df["시즌"] = library_df["시즌"].astype(str)
     total_books = len(library_df)
-
-    # ---------- 사이드바 ----------
-    spurs_logo = "https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg"
-    st.sidebar.image(spurs_logo, width=150)
+# ---------- 사이드바 (팀별 로고 & 제목 자동 변경) ----------
+    # (기존 spurs_logo 선언문은 지우고 이걸 넣으세요)
+    st.sidebar.image(current_logo, width=150) 
 
     st.sidebar.markdown(
-        "<h2 style='color:white; text-align:center;'>SPURS BOARD</h2>",
+        f"<h2 style='color:{config['accent_color']}; text-align:center;'>{user_team.upper()} BOARD</h2>",
         unsafe_allow_html=True
     )
 
@@ -171,24 +333,24 @@ if check_password():
         ["🏟️ 홈", "📝 신규 영입", "📋 스쿼드", "⚙️ 방출 관리"]
     )
 
-    st.sidebar.markdown("""
+# 슬로건도 팀별로 다르게 하고 싶다면 나중에 수정 가능!
+    st.sidebar.markdown(f"""
     <div class="sidebar-slogan">
-        <div class="main">TO DARE IS TO DO</div>
-        <div class="sub">NORTH LONDON IS WHITE</div>
+        <div class="main" style="color:{config['accent_color']};">{config.get('slogan', 'TO DARE IS TO DO')}</div>
+        <div class="sub" style="color:{config['accent_color']}cc;">{config.get('sub_slogan', user_team.upper() + ' LIBRARY')}</div>
     </div>
     """, unsafe_allow_html=True)
 
-
-
-    # ===================== 홈 =====================
+    # ===================== 홈 (메인 화면 박스 색상 수정) =====================
     if menu == "🏟️ 홈":
-        st.markdown("<h1>MATCH DAY</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h1 style='color:{config['main_color']};'>MATCH DAY</h1>", unsafe_allow_html=True)
 
         col1, col2 = st.columns([1,1])
 
         with col1:
+            # ⭐ 여기 background 색상을 config['main_color']로 바꿨습니다!
             st.markdown(f"""
-            <div style="background:#132257;color:white;padding:40px;
+            <div style="background:{config['main_color']};color:{config['accent_color']};padding:40px;
                         border-radius:25px;text-align:center;">
                 <p>GOALS SCORED</p>
                 <h1 style="font-size:70px;">⚽ {total_books}</h1>
@@ -207,7 +369,8 @@ if check_password():
                 st.plotly_chart(fig, use_container_width=True)
 
         with col2:
-            st.image(spurs_logo, use_container_width=True)
+            # ⭐ 여기도 spurs_logo 대신 current_logo로!
+            st.image(current_logo, use_container_width=True)
 
         st.subheader("SEASON STATS")
         scols = st.columns(3)
@@ -248,21 +411,27 @@ if check_password():
 
 
         if ok and title and author:
-            new = {
-                "등록일": pd.Timestamp.now().strftime("%Y-%m-%d"),
-                "책이름": title,
-                "저자": author,
-                "출판사": pub,
-                "장르": genre,
-                "시즌": season,
-                "메모": memo
+            # DB에 넣을 데이터 정리 (영어 컬럼명 주의!)
+            new_book = {
+                "registered_at": pd.Timestamp.now().strftime("%Y-%m-%d"),
+                "title": title,
+                "author": author,
+                "publisher": pub,
+                "genre": genre,
+                "season": str(season),
+                "memo": memo
             }
-            library_df = pd.concat([library_df, pd.DataFrame([new])])
-            library_df.to_csv(DB_FILE, index=False)
-            st.success(f"⚽ {title} 영입 완료!")
-            st.balloons()
+            # Supabase DB로 전송!
+            try:
+                supabase.table("books").insert(new_book).execute()
+                st.success(f"⚽ {title} 영입 완료!")
+                st.balloons()
+                st.rerun()  # <--- 'ㅇ' 지우고 깔끔하게!
+            except Exception as e:
+                st.error(f"영입 실패: {e}")
+
+            # 이 밑에 있던 library_df = pd.read_csv... 줄은 삭제됐어야 함!
              # ⭐ CSV 다시 불러오기 + 시즌 컬럼 문자열로 강제
-            library_df = pd.read_csv(DB_FILE, dtype={"시즌": str})
     elif menu == "📋 스쿼드":
         q = st.text_input("🔍 검색")
         df = library_df if q == "" else library_df[library_df["책이름"].str.contains(q)]
@@ -283,29 +452,36 @@ if check_password():
                 """, unsafe_allow_html=True)
 
 
-    # ===================== 방출 =====================
+# ===================== 방출 관리 (Supabase 전용) =====================
     elif menu == "⚙️ 방출 관리":
-        for idx, r in library_df.iterrows():
-            col1, col2 = st.columns([3,1])
+        st.subheader("🗑️ 방출 대상 선수 명단")
+        
+        # 만약 명단이 비어있다면?
+        if library_df.empty:
+            st.info("방출할 선수가 없습니다. 먼저 영입해 주세요!")
+        else:
+            for idx, r in library_df.iterrows():
+                col1, col2 = st.columns([3, 1])
 
-            with col1:
-                st.markdown(f"""
-                <div style="border-left:8px solid {GENRE_COLORS.get(r['장르'])};
-                        background:white;padding:15px;border-radius:12px;">
-                <b>{r['책이름']}</b> · {r['장르']}
-            </div>
-            """, unsafe_allow_html=True)
+                with col1:
+                    # 장르별 색상은 그대로 유지!
+                    genre_color = GENRE_COLORS.get(r['장르'], "#ccc")
+                    st.markdown(f"""
+                        <div style="border-left:8px solid {genre_color};
+                                    background:white;padding:15px;border-radius:12px;margin-bottom:10px;box-shadow: 2px 2px 5px rgba(0,0,0,0.05);">
+                            <b style="font-size:1.1em;">{r['책이름']}</b> · <span style="color:gray;">{r['장르']}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
 
-
-            if col2.button("방출", key=f"rel{idx}"):
-                st.session_state.confirm = idx
-
-            if st.session_state.get("confirm") == idx:
-                if col2.button("예", key=f"yes{idx}"):
-                    library_df = library_df.drop(idx)
-                    library_df.to_csv(DB_FILE, index=False)
-                    st.toast(f"🚪 {r['책이름']} 방출 완료", icon="⚽")
-                    st.session_state.pop("confirm")
-                    st.rerun()
-                if col2.button("아니오", key=f"no{idx}"):
-                    st.session_state.pop("confirm")
+                with col2:
+                    # 원터치 방출 버튼 (id값을 직접 사용해서 DB 타겟팅!)
+                    # ⚠️ r['id']가 실제 Supabase의 id 컬럼 값이어야 합니다.
+                    if st.button("방출", key=f"del_{r['id']}"):
+                        try:
+                            # 🔍 Supabase 서버에 방출 명령 전달
+                            supabase.table("books").delete().eq("id", r['id']).execute()
+                            
+                            st.toast(f"🚪 {r['책이름']} 방출 완료!", icon="⚽")
+                            st.rerun()  # 즉시 명단 업데이트
+                        except Exception as e:
+                            st.error(f"방출 실패: {e}")
