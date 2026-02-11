@@ -16,7 +16,11 @@ from supabase import create_client, Client
 url: str = st.secrets["SUPABASE_URL"]
 key: str = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(url, key)
+import hashlib
 
+# 비밀번호 암호화 전술
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 # ===================== 장르 & 색상 =====================
 GENRES = [
     "소설", "만화", "자기계발", "과학/기술", "인문/사회",
@@ -195,25 +199,73 @@ def check_password():
         return True
 
     st.title("⚽ CLUB MEMBERSHIP")
+# 기존 st.title("⚽ CLUB MEMBERSHIP") 바로 아래에 붙여넣으세요!
+    tab1, tab2, tab3 = st.tabs(["🔒 로그인", "📝 회원가입", "🔍 아이디/비번 찾기"])
 
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        # ⭐ 여기를 토트넘 로고 대신 EPL 공식 로고로 변경!
-        epl_logo = "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg"
-        st.image(epl_logo, width=150) # 폭도 살짝 키웠습니다!
-    
-    with col2:
-        # ... 이하 아이디/비번 입력창 그대로 ...
-        input_id = st.text_input("USER ID (아이디)")
-        input_pw = st.text_input("PASSWORD (비밀번호)", type="password")
-        login_btn = st.button("LOGIN")
+    with tab1:
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            epl_logo = "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg"
+            st.image(epl_logo, width=150)
+        with col2:
+            input_id = st.text_input("USER ID (아이디)", key="login_id")
+            input_pw = st.text_input("PASSWORD (비밀번호)", type="password", key="login_pw")
+            login_btn = st.button("LOGIN")
 
+    with tab2:
+        st.subheader("📝 신규 구단주 입단 신청")
+        with st.form("signup_form"):
+            new_id = st.text_input("사용할 아이디")
+            new_pw = st.text_input("비밀번호", type="password")
+            new_email = st.text_input("이메일 (아이디 찾기용)")
+            new_hint = st.text_input("질문: 가장 좋아하는 선수 이름은? (비번 찾기용)")
+            new_team = st.selectbox("응원 구단 선택", list(TEAM_CONFIG.keys()))
+            
+            if st.form_submit_button("입단 계약서 서명"):
+                # 중복 아이디 체크
+                check = supabase.table("users").select("username").eq("username", new_id).execute()
+                if check.data:
+                    st.error("이미 리그에 등록된 아이디입니다.")
+                else:
+                    # 비밀번호 해시(암호화)해서 저장!
+                    supabase.table("users").insert({
+                        "username": new_id, 
+                        "password": hash_password(new_pw), # 이 함수는 맨 위에 만드셔야 해요!
+                        "email": new_email,
+                        "hint_answer": new_hint,
+                        "team_name": new_team
+                    }).execute()
+                    st.success("입단 완료! 로그인 탭으로 이동해서 로그인해주세요.")
+
+    with tab3:
+        st.subheader("🔍 계정 정보 찾기")
+        find_mode = st.radio("찾기 모드", ["아이디 찾기", "비밀번호 확인"])
+        if find_mode == "아이디 찾기":
+            f_email = st.text_input("가입 시 등록한 이메일 입력")
+            if st.button("아이디 찾기"):
+                res = supabase.table("users").select("username").eq("email", f_email).execute()
+                if res.data:
+                    st.info(f"찾으시는 아이디는 [{res.data[0]['username']}] 입니다.")
+                else:
+                    st.error("등록된 정보가 없습니다.")
+        else:
+            f_id = st.text_input("아이디 입력")
+            f_hint = st.text_input("답변: 좋아하는 선수 이름은?")
+            if st.button("정보 일치 확인"):
+                # 비번은 암호화되어 있어서 본인도 못 보게 하는 게 보안의 정석입니다. 일치 여부만 확인!
+                res = supabase.table("users").select("*").eq("username", f_id).eq("hint_answer", f_hint).execute()
+                if res.data:
+                    st.success("정보가 일치합니다! 로그인을 진행해주세요.")
+                else:
+                    st.error("정보가 일치하지 않습니다.")
+
+    # --- 여기서부터 다시 기존 if login_btn: 로직이 시작됩니다 ---
     if login_btn:
         try:
             # Supabase에서 유저 정보 확인
             response = supabase.table("users").select("*")\
                 .eq("username", input_id)\
-                .eq("password", input_pw)\
+                .eq("password", hash_password(input_pw))\
                 .execute()
 
 # (기존 코드 74라인 부근 수정)
@@ -233,6 +285,8 @@ def check_password():
     return True
 # ===================== 메인 =====================
 if check_password():
+    # DB 작업 하기 바로 직전에 이 쿼리를 먼저 날려줘야 RLS를 통과합니다!
+    supabase.rpc("set_config", {"setting": "app.current_username", "value": st.session_state.user_id}).execute()
     # 1. 팀 정보 가져오기 (이건 그대로 유지!)
     user_team = st.session_state.get("user_team", "Tottenham")
     config = TEAM_CONFIG.get(user_team, TEAM_CONFIG["Tottenham"])
@@ -291,7 +345,7 @@ if check_password():
 
     # 3. 이후 DB 로드 로직 시작...
     try:
-        response = supabase.table("books").select("*").execute()
+        response = supabase.table("books").select("*").eq("username", st.session_state.user_id).execute()
         # ... (이하 기존 코드 그대로)
         
         if response.data:
@@ -340,7 +394,12 @@ if check_password():
         <div class="sub" style="color:{config['accent_color']}cc;">{config.get('sub_slogan', user_team.upper() + ' LIBRARY')}</div>
     </div>
     """, unsafe_allow_html=True)
-
+# 사이드바 하단에 로그아웃 버튼 배치
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🚪 전술 후퇴 (로그아웃)"):
+        st.session_state.auth = False
+        st.session_state.user_id = None
+        st.rerun()
     # ===================== 홈 (메인 화면 박스 색상 수정) =====================
     if menu == "🏟️ 홈":
         st.markdown(f"<h1 style='color:{config['main_color']};'>MATCH DAY</h1>", unsafe_allow_html=True)
@@ -412,6 +471,7 @@ if check_password():
 
         if ok and title and author:
             # DB에 넣을 데이터 정리 (영어 컬럼명 주의!)
+# 수정 후 (username을 꼭 넣어주세요!)
             new_book = {
                 "registered_at": pd.Timestamp.now().strftime("%Y-%m-%d"),
                 "title": title,
@@ -419,6 +479,7 @@ if check_password():
                 "publisher": pub,
                 "genre": genre,
                 "season": str(season),
+                "username": st.session_state.user_id,  # ⭐ 이 줄 추가! 누가 영입했는지 기록
                 "memo": memo
             }
             # Supabase DB로 전송!
